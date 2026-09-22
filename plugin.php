@@ -4,8 +4,8 @@
 Plugin Name:    Bulk Import and Shorten
 Plugin URI:     https://github.com/vaughany/yourls-bulk-import-and-shorten
 Description:    A YOURLS plugin allowing importing of URLs in bulk to be shortened or (optionally) with a custom short URL.
-Version:        0.4
-Release date:   2020-07-31
+Version:        0.5
+Release date:   2026-09-22
 Author:         Paul Vaughan
 Author URI:     http://github.com/vaughany/
 */
@@ -62,6 +62,8 @@ function vaughany_bias_handle_post() {
             } else {
                 $message = 'No URLs imported.';
             }
+        } else {
+            $message = 'Invalid or missing security token. Please try again.';
         }
     }
 
@@ -81,32 +83,53 @@ function vaughany_bias_import_urls( $file ) {
 
     if ( !is_uploaded_file( $file['tmp_name'] ) ) {
         yourls_add_notice('Not an uploaded file.');
+        return 0;
     }
 
-    // Only handle .csv files.
-    if ($file['type'] !== 'text/csv') {
+    if ( isset( $file['error'] ) && $file['error'] !== UPLOAD_ERR_OK ) {
+        yourls_add_notice('Upload failed. Check that the file is not larger than allowed by your PHP settings (upload_max_filesize / post_max_size).');
+        return 0;
+    }
+
+    // Only handle .csv files: check the file extension, falling back to a list
+    // of common CSV MIME types because browsers send varying values here.
+    $extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+    $csv_mimes = array(
+        'text/csv',
+        'text/plain',
+        'application/csv',
+        'application/excel',
+        'application/vnd.ms-excel',
+        'application/vnd.msexcel',
+    );
+    if ( $extension !== 'csv' && !in_array( $file['type'], $csv_mimes ) ) {
         yourls_add_notice('Not a .csv file.');
         return 0;
     }
 
-    global $ydb;
-
-    ini_set( 'auto_detect_line_endings', true );
-    $count  = 0;
-    $fh     = fopen( $file['tmp_name'], 'r' );
-    $table  = YOURLS_DB_TABLE_URL;
+    $count = 0;
+    $fh    = fopen( $file['tmp_name'], 'r' );
 
     // If the file handle is okay.
     if ( $fh ) {
 
+        // Bulk import by a logged-in admin is not DB flooding: bypass YOURLS'
+        // IP flood protection (YOURLS 1.9+) which would otherwise kill the
+        // import with a 429 "Too Many Requests" on public installations.
+        yourls_add_filter( 'shunt_check_IP_flood', 'vaughany_bias_return_true' );
+
         // Get each line in turn as an array, comma-separated.
-        while ( $csv = fgetcsv( $fh, 1000, ',' ) ) {
+        while ( ( $csv = fgetcsv( $fh, 0, ',', '"', '' ) ) !== false ) {
 
-            $url = $keyword = $title = '';
+            // Strip a UTF-8 byte order mark and skip blank lines.
+            $url = trim( str_replace( "\xEF\xBB\xBF", '', (string) $csv[0] ) );
+            if ( $url === '' ) {
+                continue;
+            }
 
-            $url = trim( $csv[0] );
+            $keyword = $title = '';
 
-            if ( isset( $csv[1] ) && !empty( $csv[1] ) ) {
+            if ( !empty( $csv[1] ) ) {
                 // Trim out cruft and slashes.
                 $new_keyword = trim( str_replace( '/', '', $csv[1] ) );
 
@@ -116,12 +139,8 @@ function vaughany_bias_import_urls( $file ) {
                 }
             }
 
-            if ( isset( $csv[2] ) ) {
-                if ( !empty ( $csv[2] ) ) {
-                    $title = trim( $csv[2] );
-                } else {
-                    $title = vaughany_bias_create_title_from_url( $url );
-                }
+            if ( isset( $csv[2] ) && !empty( $csv[2] ) ) {
+                $title = trim( $csv[2] );
             } else {
                 $title = vaughany_bias_create_title_from_url( $url );
             }
@@ -134,11 +153,18 @@ function vaughany_bias_import_urls( $file ) {
             }
         }
 
+        yourls_remove_filter( 'shunt_check_IP_flood', 'vaughany_bias_return_true' );
+        fclose( $fh );
+
     } else {
         yourls_add_notice('File handle is bad.');
     }
 
     return $count;
+}
+
+function vaughany_bias_return_true() {
+    return true;
 }
 
 /**

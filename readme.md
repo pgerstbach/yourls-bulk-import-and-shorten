@@ -1,11 +1,11 @@
 # Bulk Import and Shorten - a YOURLS plugin
 
-Plugin for [YOURLS](http://yourls.org) 1.7.x.
+Plugin for [YOURLS](http://yourls.org) 1.7.x to 1.10.x.
 
 * Plugin URI:       [github.com/vaughany/yourls-bulk-import-and-shorten](https://github.com/vaughany/yourls-bulk-import-and-shorten)
 * Description:      A YOURLS plugin allowing importing of URLs in bulk to be shortened or (optionally) with a custom short URL.
-* Version:          0.4
-* Release date:     2020-07-31
+* Version:          0.5
+* Release date:     2026-09-22
 * Author:           Paul Vaughan
 * Author URI:       [github.com/vaughany](http://github.com/vaughany/)
 
@@ -121,6 +121,7 @@ I'm always keen to add new features, improve performance and squash bugs, so if 
 
 ## History
 
+* **2026-09-22, v0.5:**     Fixes for YOURLS 1.9+ and PHP 8.x: bulk imports no longer die with "Too Many Requests" (429) on public installations (YOURLS' IP flood protection is bypassed during import), the CSV type check now accepts the various MIME types browsers send for .csv files (e.g. `application/vnd.ms-excel` on Windows), a UTF-8 BOM at the start of the file is stripped, blank lines are skipped, upload errors (e.g. file larger than `upload_max_filesize`) are reported instead of silently ignored, URLs longer than 1000 characters are no longer truncated, and deprecated PHP features (`auto_detect_line_endings`, `fgetcsv` escape parameter, `trim(null)`) were removed.
 * **2020-07-31, v0.4:**     No meaningful code changes, but added a small Bash (Linux) script to make a large single-column CSV file for testing. You should be able to run it within Bash with `./create-large-csv.sh`. You might have to `chmod +x create-large-csv.sh` first.
 * **2020-07-25, v0.3:**     Going through the issues on GitHub and saw #3 which looked like an easy addition, so now if a third, optional field is specified in the URL, that is used as a title.
 * **2020-07-25, v0.2:**     From a bug report via email about it running slowly processing thousands of rows, I've attempted a 'fix' by creating a title from the URL and passing that to the YOURLS function that would otherwise attempt to fetch one from the URL's HTML.
