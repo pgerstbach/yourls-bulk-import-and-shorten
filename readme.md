@@ -1,6 +1,6 @@
 # Bulk Import and Shorten - a YOURLS plugin
 
-Tested with YOURLS 1.10.6. Requires PHP 7.4 or newer.
+Plugin for [YOURLS](http://yourls.org). Tested with YOURLS 1.10.6, requires PHP 7.4 or newer.
 
 * Plugin URI:       [github.com/vaughany/yourls-bulk-import-and-shorten](https://github.com/vaughany/yourls-bulk-import-and-shorten)
 * Description:      A YOURLS plugin allowing importing of URLs in bulk to be shortened or (optionally) with a custom short URL.
@@ -121,7 +121,7 @@ I'm always keen to add new features, improve performance and squash bugs, so if 
 
 ## History
 
-* **2026-09-22, v0.5:**     Failed uploads are now reported with clear error messages instead of silently reloading the page (file_uploads disabled, post_max_size exceeded, PHP upload error codes, missing security token). The plugin page warns upfront when file uploads are disabled on the server. CSV files are accepted by their .csv extension instead of the browser-provided MIME type. The import result reports imported and skipped rows with the most common skip reason, and counts requested short URLs that were already taken (generated ones were used instead). Fixes PHP 8.x deprecations, no longer truncates URLs longer than 1000 characters, strips a UTF-8 BOM and skips blank lines. Tested with YOURLS 1.10.6, requires PHP 7.4 or newer.
+* **2026-09-22, v0.5:**     Failed uploads are now reported with clear error messages instead of silently reloading the page (file_uploads disabled, post_max_size exceeded, PHP upload error codes, missing security token). The plugin page warns upfront when file uploads are disabled on the server. CSV files are accepted by their .csv extension instead of the browser-provided MIME type. The import result reports imported and skipped rows with the most common skip reason, and counts requested short URLs that were already taken (generated ones were used instead). Fixes PHP 8.x deprecations, no longer truncates URLs longer than 1000 characters, strips a UTF-8 BOM and skips blank lines. Tested with YOURLS 1.10.6, requires PHP 7.4 or newer. Contributed by Peter Gerstbach.
 * **2020-07-31, v0.4:**     No meaningful code changes, but added a small Bash (Linux) script to make a large single-column CSV file for testing. You should be able to run it within Bash with `./create-large-csv.sh`. You might have to `chmod +x create-large-csv.sh` first.
 * **2020-07-25, v0.3:**     Going through the issues on GitHub and saw #3 which looked like an easy addition, so now if a third, optional field is specified in the URL, that is used as a title.
 * **2020-07-25, v0.2:**     From a bug report via email about it running slowly processing thousands of rows, I've attempted a 'fix' by creating a title from the URL and passing that to the YOURLS function that would otherwise attempt to fetch one from the URL's HTML.
